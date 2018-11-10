@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
     CROW_ROUTE(app,"/key/<Cache::key_type>")
         .methods("GET" _method, "HEAD" _method, "DELETE" _method)
-    ([](const crow::request& req, Cache::key_type key)
+    ([server_cache](const crow::request& req, Cache::key_type key)
     {
         if (req.method == crow::HTTPMethod::GET) {
 
@@ -50,21 +50,21 @@ int main(int argc, char *argv[])
 
     CROW_ROUTE(app, "/key/<Cache::key_type>/<Cache::val_type>")
         .methods("PUT" _method)
-    ([](const crow::request& req, Cache::key_type key, Cache::val_type val)
+    ([server_cache](const crow::request& req, Cache::key_type key, Cache::val_type val)
     {
 
     })
 
     CROW_ROUTE(app, "/memsize")
         .methods("GET" _method)
-    ([](const crow::request& req)
+    ([server_cache](const crow::request& req)
     {
 
     })
 
     CROW_ROUTE(app, "/shutdown")
         .methods("POST" _method)
-    ([](const crow::request& req)
+    ([server_cache](const crow::request& req)
     {
 
     })
