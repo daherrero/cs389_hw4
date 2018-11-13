@@ -69,7 +69,6 @@ public:
             return 0;
         }
         return NULL;
-
     }
 
     val_type get(key_type key, index_type& val_size) const {
