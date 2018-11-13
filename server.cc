@@ -1,70 +1,138 @@
 // server.cc
-// g++ server.cc -std=c++11 -lboost_system -lboost_thread
 #include "crow_all.h"
 #include "cache.hh"
+#include "json.hpp"
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <cstdlib>
+#include <time.h>
 
-Cache server_cache(1080);
+// GLOBALS
+int MAXMEM = 1080;
+int PORTNUM = 17017;
+std::unique_ptr<Cache> CACHE_PTR;
 
+int exit(crow::SimpleApp app) {
+    app.stop();
+}
 
 int main(int argc, char *argv[])
 {
     crow::SimpleApp app;
 
-    // Initialize default values for maxmem and portnum
-    int maxmem = 1080;
-    int portnum = 17017;
-
     // Parse command line args
     int c;
-    while( ( c = getopt (argc, argv, "m:t:") ) != -1 )
+    while( ( c = getopt (argc, argv, "m:t:") ) != -1 ) 
     {
         switch(c)
         {
+            // Memory arg
             case 'm':
-                if(optarg) maxmem = std::atoi(optarg);
+                if(optarg) MAXMEM = std::atoi(optarg);
                 break;
+            // Port number arg
             case 't':
-                if(optarg) portnum = std::atoi(optarg) ;
+                if(optarg) PORTNUM = std::atoi(optarg) ;
                 break;
         }
     }
+    
+    //Initialize the cache pointer with a new cache of size MAXMEM
+    CACHE_PTR.reset(new Cache(MAXMEM));
 
-
-
-    CROW_ROUTE(app,"/key/<string>")
-        .methods(crow::HTTPMethod::GET, crow::HTTPMethod::HEAD, crow::HTTPMethod::DELETE)
-        ([&](const crow::request& req, std::string key)
+    // memsize GET
+    // No errors other than 404 which get handled by the Crow API
+    app.route_dynamic("/memsize")
+    .methods("GET"_method)
+    ([](const crow::request& req) {
+        if (req.method == "GET"_method){
+            // Call the cache and get its space_used
+            Cache::index_type mem = (*CACHE_PTR).space_used();
+            crow::json::wvalue return_json;
+            return_json["memused"] = mem;
+            return crow::response{return_json};
+        } else {
+            return(crow::response(400));
+        }
+    });
+    // key PUT
+    app.route_dynamic("/key/<string>/<int>")
+    .methods("PUT"_method)
+    ([](const crow::request& req,std::string key, int val){
+        if (req.method == "PUT"_method){
+            Cache::val_type val_point = &val;
+            uint32_t val_size = sizeof(val);
+            int set_return = (*CACHE_PTR).set(key,val_point,val_size);
+            // returns error if insertion fails
+            if (set_return != 0) {
+                return(crow::response(400,"400 COULD NOT INSERT KEY/VALUE\n"));
+            }
+            Cache::index_type memused = (*CACHE_PTR).space_used();
+            crow::json::wvalue return_json;
+            return_json["value"] = val;
+            return_json["key"] = key;
+            return crow::response{return_json};
+            } else {
+            return(crow::response(400));
+        }
+    });
+    
+    // key DELETE, GET, HEAD
+    app.route_dynamic("/key/<string>") 
+    .methods("DELETE"_method,"GET"_method,"HEAD"_method)
+    ([](const crow::request& req,std::string key) {
+        if (req.method == "DELETE"_method)
         {
-            if (req.method == crow::HTTPMethod::GET) {
-                return crow::response(405);
+            Cache::index_type delete_return = (*CACHE_PTR).del(key);
+
+            if (delete_return != 0)
+            {
+                return(crow::response(400,"400 KEY NOT IN CACHE \n"));
             }
-            else if (req.method == crow::HTTPMethod::HEAD) {
-                return crow::response(405);
+            return crow::response(200,"200 VALUE DELETED\n");
+
+        } else if (req.method == "GET"_method) {
+            Cache::index_type sized;
+            Cache::val_type the_point = (*CACHE_PTR).get(key, sized);
+            if (the_point == NULL)
+            {
+                return(crow::response(400,"400 KEY NOT IN CACHE \n"));
             }
-            else if (req.method == crow::HTTPMethod::DELETE) {
-                return crow::response(405);
-            }
-            else {
-                return crow::response(405);
-            }
-        });
+            // Convert pointer to string and return a json with the k/v pair
+            std::stringstream ss;
+            ss << the_point;
+            std::string point_string = ss.str();
+            crow::json::wvalue return_json;
+            return_json["value"] = point_string;
+            return_json["key"] = key;
+            return crow::response{return_json};
+        } else if (req.method == "HEAD"_method) {
+            // crows default header has most of the relevant parameters, we just needed to add these ones
+            crow::response resp;
+            resp.add_header("Accept","text/plain");
+            resp.add_header("Accept-Charset","utf-8");
+            resp.add_header("Content-Type","text/plain");
+            Cache::index_type space = (*CACHE_PTR).space_used();
+            resp.add_header("Memory Used",std::to_string(space));
+            return resp;
 
+        } else {
+            return(crow::response(400));
+        }
+    });
 
+    app.route_dynamic("/shutdown")
+    .methods("POST"_method)
+    ([&app](const crow::request& req) {
+        if (req.method == "POST"_method) {
+            // this cleans up the server and exits, returning a message to the caller
+            app.stop();
+            return(crow::response(200,"200 SHUTTING DOWN \n"));
+        }
+    });
 
-    CROW_ROUTE(app, "/shutdown")
-        .methods(crow::HTTPMethod::POST)
-        ([](const crow::request& req)
-        {
-            return crow::response(405);
-
-        });
-
-    app.loglevel(crow::LogLevel::DEBUG);
-
-    app.port(18080)
-            .run();
-
+    // opens the port specified in arguments
+    app.port(PORTNUM)
+        .run();
 }

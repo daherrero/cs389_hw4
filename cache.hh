@@ -7,8 +7,7 @@
 #include <functional>
 #include <memory>
 #include <string>
-#pragma
-
+#pragma once 
 class Cache {
  private:
    // All internal data and functionality is hidden using the Pimpl idiom
