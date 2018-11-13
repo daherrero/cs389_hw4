@@ -17,22 +17,23 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 
 int main(void)
 {
+    Cache::key_type key = "tonto";
+    Cache::val_type val_t = 49;
+    int val = val_t;
     CURL *curl;
     CURLcode res;
 
-    std::string readBuffer;
-
     std::stringstream url;
-    url << SERVER_NAME << ":" << PORT << "/" << "shutdown";
-    std::cout << url.str();
+    url << SERVER_NAME << ":" << PORT << "/" << "key" << "/" << key << "/" << val;
     auto url_str = url.str();
-    curl = curl_easy_init();
 
+    curl = curl_easy_init();
     if(curl) {
+        std::string readBuffer;
         curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
 
         res = curl_easy_perform(curl);
         curl_easy_cleanup(curl);

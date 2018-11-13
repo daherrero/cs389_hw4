@@ -33,7 +33,6 @@ public:
 
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "shutdown";
-        std::cout << url.str();
         auto url_str = url.str();
         curl = curl_easy_init();
 
@@ -54,7 +53,6 @@ public:
 
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "key" << "/" << key << "/" << val;
-        std::cout << url.str();
         auto url_str = url.str();
 
         curl = curl_easy_init();
@@ -80,7 +78,6 @@ public:
 
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/"<< "key/" << key;
-        std::cout << url.str();
         auto url_str = url.str();
 
         curl = curl_easy_init();
@@ -109,7 +106,6 @@ public:
 
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "key/" << key;
-        std::cout << url.str();
         auto url_str = url.str();
 
         curl = curl_easy_init();
@@ -134,7 +130,6 @@ public:
 
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "memsize";
-        std::cout << url.str();
         auto url_str = url.str();
 
         curl = curl_easy_init();
@@ -149,7 +144,6 @@ public:
 
             auto readBuffer_json = nlohmann::json::parse(readBuffer);
             Cache::index_type memused = readBuffer_json.at("memused");
-            std::cout << memused << std::endl;
 
             return memused;
         }
