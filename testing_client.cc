@@ -1,9 +1,12 @@
+#include "cache.hh"
+#include "json.hpp"
+#include <sstream>
 #include <iostream>
 #include <string>
-#include "json.hpp"
 #include <curl/curl.h>
-#include "cache.hh"
 
+std::string SERVER_NAME = "0.0.0.0";
+std::string PORT = "17017";
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -20,13 +23,28 @@ struct Cache::Impl {
     std::unordered_map<std::string, std::tuple<val_type, index_type, index_type>> unorderedmap_;
 public:
     Impl(index_type maxmem, hash_func hasher)
-            : maxmem_(maxmem), evictor_(), hasher_(hasher), memused_(0), newest_(0), unorderedmap_(){
+            : maxmem_(maxmem), hasher_(hasher), memused_(0), unorderedmap_(){
     }
     ~Impl(){
-        auto it = unorderedmap_.begin();
-        while (it != unorderedmap_.end()) {
-            delete[] static_cast<const char*>(std::get<0>(it->second));
-            it = unorderedmap_.erase(it);
+        CURL *curl;
+        CURLcode res;
+
+        std::string readBuffer;
+
+        std::stringstream url;
+        url << SERVER_NAME << ":" << PORT << "/" << "shutdown";
+        std::cout << url.str();
+        auto url_str = url.str();
+        curl = curl_easy_init();
+
+        if(curl) {
+            curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+
+            res = curl_easy_perform(curl);
+            curl_easy_cleanup(curl);
         }
     }
 
@@ -35,7 +53,7 @@ public:
         CURLcode res;
 
         std::stringstream url;
-        url << "0.0.0.0:17017/key" << "/" << key << "/" << val;
+        url << SERVER_NAME << ":" << PORT << "/" << "key" << "/" << key << "/" << val;
         std::cout << url.str();
         auto url_str = url.str();
 
@@ -61,7 +79,7 @@ public:
         CURLcode res;
 
         std::stringstream url;
-        url << "0.0.0.0:17017/key/" << key;
+        url << SERVER_NAME << ":" << PORT << "/"<< "key/" << key;
         std::cout << url.str();
         auto url_str = url.str();
 
@@ -90,7 +108,7 @@ public:
         CURLcode res;
 
         std::stringstream url;
-        url << "0.0.0.0:17017/key/" << key;
+        url << SERVER_NAME << ":" << PORT << "/" << "key/" << key;
         std::cout << url.str();
         auto url_str = url.str();
 
@@ -110,14 +128,19 @@ public:
         return NULL;
     }
 
-    index_type space_used() const{
+    index_type space_used() const {
         CURL *curl;
         CURLcode res;
 
+        std::stringstream url;
+        url << SERVER_NAME << ":" << PORT << "/" << "memsize";
+        std::cout << url.str();
+        auto url_str = url.str();
+
         curl = curl_easy_init();
-        if(curl) {
+        if (curl) {
             std::string readBuffer;
-            curl_easy_setopt(curl, CURLOPT_URL, "0.0.0.0:17017/memsize");
+            curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -129,6 +152,7 @@ public:
             std::cout << memused << std::endl;
 
             return memused;
+        }
     }
 
 };
