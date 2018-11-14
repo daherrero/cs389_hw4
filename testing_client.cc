@@ -29,12 +29,12 @@ public:
     }
     ~Impl(){
         for (Cache::key_type key : key_list) {
-            CURL *curl;
-            CURLcode res;
             std::stringstream url;
             url << SERVER_NAME << ":" << PORT << "/" << "key/" << key;
             auto url_str = url.str();
 
+            CURL *curl;
+            CURLcode res;
             curl = curl_easy_init();
             if(curl) {
                 std::string readBuffer;
@@ -48,17 +48,16 @@ public:
     }
 
     int set(key_type key, val_type val, index_type size){
-        CURL *curl;
-        CURLcode res;
-
-        key_list.push_back(key);
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "key" << "/" << key << "/" << val;
         auto url_str = url.str();
-        
 
+        CURL *curl;
+        CURLcode res;
         curl = curl_easy_init();
         if(curl) {
+            key_list.push_back(key);
+
             std::string readBuffer;
             curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -74,14 +73,12 @@ public:
     }
 
     val_type get(key_type key, index_type& val_size) const {
-        CURL *curl;
-        CURLcode res;
-
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/"<< "key/" << key;
         auto url_str = url.str();
-        
 
+        CURL *curl;
+        CURLcode res;
         curl = curl_easy_init();
         if(curl) {
             std::string readBuffer;
@@ -117,16 +114,16 @@ public:
 
     // This deletes a (key, tuple) entry from the map
     int del(key_type key){
-        CURL *curl;
-        CURLcode res;
-        key_list.remove(key);
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "key/" << key;
         auto url_str = url.str();
-        
 
+        CURL *curl;
+        CURLcode res;
         curl = curl_easy_init();
         if(curl) {
+            key_list.remove(key);
+
             std::string readBuffer;
             curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -142,13 +139,12 @@ public:
     }
 
     index_type space_used() const {
-        CURL *curl;
-        CURLcode res;
-
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "memsize";
         auto url_str = url.str();
 
+        CURL *curl;
+        CURLcode res;
         curl = curl_easy_init();
         if (curl) {
             std::string readBuffer;

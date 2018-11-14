@@ -35,7 +35,6 @@ int main(){
     sized2 = new_cache.space_used();
     std::cout << sized2 << std::endl;
 
-
     new_cache.~Cache();
 
     return 0;
