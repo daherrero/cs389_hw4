@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <curl/curl.h>
+#include <list>
 
 std::string SERVER_NAME = "0.0.0.0";
 std::string PORT = "17017";
@@ -20,40 +21,41 @@ struct Cache::Impl {
     index_type maxmem_;
     hash_func hasher_;
     index_type memused_;
+    std::list<std::string> key_list;
     std::unordered_map<std::string, std::tuple<val_type, index_type, index_type>> unorderedmap_;
 public:
     Impl(index_type maxmem, hash_func hasher)
             : maxmem_(maxmem), hasher_(hasher), memused_(0), unorderedmap_(){
     }
     ~Impl(){
-        CURL *curl;
-        CURLcode res;
+        for (Cache::key_type key : key_list) {
+            CURL *curl;
+            CURLcode res;
+            std::stringstream url;
+            url << SERVER_NAME << ":" << PORT << "/" << "key/" << key;
+            auto url_str = url.str();
 
-        std::string readBuffer;
-
-        std::stringstream url;
-        url << SERVER_NAME << ":" << PORT << "/" << "shutdown";
-        auto url_str = url.str();
-        curl = curl_easy_init();
-
-        if(curl) {
-            curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-
-            res = curl_easy_perform(curl);
-            curl_easy_cleanup(curl);
+            curl = curl_easy_init();
+            if(curl) {
+                std::string readBuffer;
+                curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
+                curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+                res = curl_easy_perform(curl);
+                curl_easy_cleanup(curl);
+            }
         }
+        key_list.clear();
     }
 
     int set(key_type key, val_type val, index_type size){
         CURL *curl;
         CURLcode res;
 
+        key_list.push_back(key);
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "key" << "/" << key << "/" << val;
         auto url_str = url.str();
+        
 
         curl = curl_easy_init();
         if(curl) {
@@ -78,6 +80,7 @@ public:
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/"<< "key/" << key;
         auto url_str = url.str();
+        
 
         curl = curl_easy_init();
         if(curl) {
@@ -88,6 +91,12 @@ public:
 
             res = curl_easy_perform(curl);
             curl_easy_cleanup(curl);
+
+            std::stringstream sss;
+            sss << readBuffer;
+            if (sss.str().compare("400 Bad Request")) {
+                return NULL;
+            }
 
             auto readBuffer_json = nlohmann::json::parse(readBuffer);
             auto key_name = readBuffer_json.at("key");
@@ -100,6 +109,7 @@ public:
             const char* cstr = point_string.c_str();
             sscanf(cstr,"%lx",&ul);
             void * ptv = (void *)(uintptr_t) ul;
+            val_size = sizeof(ptv);
             return ptv;
         }
         return NULL;
@@ -109,10 +119,11 @@ public:
     int del(key_type key){
         CURL *curl;
         CURLcode res;
-
+        key_list.remove(key);
         std::stringstream url;
         url << SERVER_NAME << ":" << PORT << "/" << "key/" << key;
         auto url_str = url.str();
+        
 
         curl = curl_easy_init();
         if(curl) {

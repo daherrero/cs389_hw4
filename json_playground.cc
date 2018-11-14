@@ -27,6 +27,7 @@ int main(void)
     auto url_str = url.str();
 
     curl = curl_easy_init();
+
     if(curl) {
         std::string readBuffer;
         long response_code;
@@ -34,15 +35,17 @@ int main(void)
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-
         res = curl_easy_perform(curl);
         curl_easy_cleanup(curl);
-        std::cout << response_code << std::endl;
 
-        if (response_code == 400) {
-            std::cout <<"FOLLOWED" << std::endl;
+        std::stringstream sss;
+        sss << readBuffer;
+        std::cout << readBuffer;
+
+        if (sss.str().compare("400 Bad Request")) {
             return NULL;
         }
+
         auto readBuffer_json = nlohmann::json::parse(readBuffer);
         auto key_name = readBuffer_json.at("key");
         auto pointer_to_val = readBuffer_json.at("value");

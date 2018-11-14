@@ -13,7 +13,7 @@ TEST_CASE("Set/Get","[single-file]")
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
         Cache::index_type sized;
-        
+
         // Set the value
         new_cache.set(key1, point1, size);
 
@@ -33,7 +33,7 @@ TEST_CASE("Set/Get","[single-file]")
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
         Cache::index_type sized;
-        
+
         // Set the value
         new_cache.set(key1, point1, size);
 
@@ -49,7 +49,7 @@ TEST_CASE("Set/Get","[single-file]")
         const Cache::key_type key1 = "one";
         Cache new_cache(1000);
         Cache::index_type sized;
-        
+
         // Get a pointer to the "value"
         Cache::val_type the_point = new_cache.get(key1, sized);
 
@@ -65,10 +65,10 @@ TEST_CASE("Set/Get","[single-file]")
         const Cache::index_type size1 = sizeof(val);
         const Cache::index_type size2 = 10000000;
         Cache new_cache(100);
-        
+
         // Set the value
         new_cache.set(key1, point1, size1);
-        
+
         // Get the memory
         Cache::index_type size_before = new_cache.space_used();
 
@@ -92,7 +92,7 @@ TEST_CASE("Set/Get","[single-file]")
         const Cache::index_type size2 = sizeof(val2);
         Cache new_cache(1000);
         Cache::index_type sized;
-        
+
         // Set the value
         new_cache.set(key1, point1, size1);
 
@@ -102,9 +102,9 @@ TEST_CASE("Set/Get","[single-file]")
         // Get the new value
         Cache::val_type the_point = new_cache.get(key1, sized);
         const bool &theval = *(static_cast<const bool *>(the_point));
-        
+
         // Get the memory used
-        Cache::index_type memory = new_cache.space_used();  
+        Cache::index_type memory = new_cache.space_used();
 
         // Require the value returned is the initial value
         REQUIRE(memory == size2);
@@ -119,7 +119,7 @@ TEST_CASE("Space_used")
         // Initialize cache and key/value variables/pointers
         Cache new_cache(1000);
         Cache::index_type sized;
-        
+
         // Get space_used
         sized = new_cache.space_used();
 
@@ -135,13 +135,13 @@ TEST_CASE("Space_used")
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
         Cache::index_type sized;
-        
+
         // Set the value
         new_cache.set(key1, point1, size);
 
         // Get space_used
         sized = new_cache.space_used();
-        
+
         // Require space_used is the size of the value we've inserted
         REQUIRE(sized == size);
     }
@@ -158,7 +158,7 @@ TEST_CASE("Del")
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
         Cache::index_type sized = 0;
-            
+
         // Set the value
         new_cache.set(key1, point1, size);
 
@@ -182,7 +182,7 @@ TEST_CASE("Del")
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
         Cache::index_type sized = size;
-            
+
         // Set the value
         new_cache.set(key1, point1, size);
 
@@ -192,7 +192,7 @@ TEST_CASE("Del")
         // Get pointer to value in cache
         Cache::val_type the_point = new_cache.get(key1, sized);
         const uint32_t &theval = *(static_cast<const u_int32_t *>(the_point));
-        
+
         // Require the value is still there and the memory used is correct
         REQUIRE(size == new_cache.space_used());
         REQUIRE(theval == val);

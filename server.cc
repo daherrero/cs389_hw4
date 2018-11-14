@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
             
             // returns error if insertion fails
             if (set_return != 0) {
-                return(crow::response(400,"400 COULD NOT INSERT KEY/VALUE\n"));
+                return(crow::response(400));
             }
             
             Cache::index_type memused = (*CACHE_PTR).space_used();
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
             
             // returns error if insertion fails
             if (set_return != 0) {
-                return(crow::response(400,"400 COULD NOT INSERT KEY/VALUE\n"));
+                return(crow::response(400));
             }
             
             Cache::index_type memused = (*CACHE_PTR).space_used();
@@ -125,9 +125,9 @@ int main(int argc, char *argv[])
 
             if (delete_return != 0)
             {
-                return(crow::response(400,"400 KEY NOT IN CACHE \n"));
+                return(crow::response(400));
             }
-            return crow::response(200,"200 VALUE DELETED\n");
+            return crow::response(200);
         
         // Get method returns string of pointer to value
         } else if (req.method == "GET"_method) {
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
             Cache::val_type the_point = (*CACHE_PTR).get(key, sized);
             if (the_point == NULL)
             {
-                return(crow::response(400,"400 KEY NOT IN CACHE \n"));
+                return(crow::response(400));
             }
             // Convert pointer to string and return a json with the k/v pair
             std::stringstream ss;
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
         if (req.method == "POST"_method) {
             // this cleans up the server and exits, returning a message to the caller
             app.stop();
-            return(crow::response(200,"200 SHUTTING DOWN \n"));
+            return(crow::response(200));
         }
     });
 

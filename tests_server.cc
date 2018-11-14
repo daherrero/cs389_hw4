@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "testing_client.cc"
-// g++ -std=c++17 -o server server.cpp cache.cpp -l boost_system -pthread
+
 TEST_CASE("Set/Get","[single-file]")
 {
     SECTION("A value in the cache can be retrieved.")
@@ -23,6 +23,9 @@ TEST_CASE("Set/Get","[single-file]")
 
         // Require the value returned is the initial value
         REQUIRE(theval == val);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
     SECTION("The size of the value returned is correct.")
     {
@@ -42,6 +45,9 @@ TEST_CASE("Set/Get","[single-file]")
 
         // Require the size of the value returned is the size of the inital value
         REQUIRE(sized == size);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
     SECTION("Getting a value not in the cache returns null.")
     {
@@ -55,6 +61,9 @@ TEST_CASE("Set/Get","[single-file]")
 
         // Require the pointer is NULL
         REQUIRE(!the_point);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
     SECTION("Setting a value with size > the capacity of the cache fails.")
     {
@@ -79,6 +88,9 @@ TEST_CASE("Set/Get","[single-file]")
 
         // Require the size of the value returned is the size of the inital value
         REQUIRE(size_before == size_after);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
     SECTION("Setting a value of a key already in the cache updates space_used and value correctly.")
     {
@@ -109,6 +121,9 @@ TEST_CASE("Set/Get","[single-file]")
         // Require the value returned is the initial value
         REQUIRE(memory == size2);
         REQUIRE(theval == val2);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
 }
 
@@ -125,6 +140,9 @@ TEST_CASE("Space_used")
 
         // Require space_used by empty cache is 0
         REQUIRE(sized == 0);
+
+        // Call destructor
+        new_cache.~Cache();
     }
     SECTION("Ensure space_used is correct when cache has k/v's in it.")
     {
@@ -144,6 +162,9 @@ TEST_CASE("Space_used")
 
         // Require space_used is the size of the value we've inserted
         REQUIRE(sized == size);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
 }
 
@@ -171,6 +192,9 @@ TEST_CASE("Del")
         // Require space used is 0 and pointer is NULL
         REQUIRE(sized == 0);
         REQUIRE(!the_point);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
     SECTION("Delete on k/v not in cache has no effect.")
     {
@@ -196,5 +220,8 @@ TEST_CASE("Del")
         // Require the value is still there and the memory used is correct
         REQUIRE(size == new_cache.space_used());
         REQUIRE(theval == val);
+
+        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
+        new_cache.~Cache();
     }
 }
