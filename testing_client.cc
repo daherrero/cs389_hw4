@@ -93,7 +93,14 @@ public:
             auto key_name = readBuffer_json.at("key");
             auto pointer_to_val = readBuffer_json.at("value");
 
-            return pointer_to_val; // TYPE ERROR
+            std::stringstream ss;
+            ss << pointer_to_val;
+            std::string point_string = ss.str();
+            unsigned long ul;
+            const char* cstr = point_string.c_str();
+            sscanf(cstr,"%lx",&ul);
+            void * ptv = (void *)(uintptr_t) ul;
+            return ptv;
         }
         return NULL;
     }

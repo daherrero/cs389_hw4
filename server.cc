@@ -1,4 +1,5 @@
 // server.cc
+// Mike Kalange and David Herrero 
 #include "crow_all.h"
 #include "cache.hh"
 #include "json.hpp"
@@ -12,10 +13,6 @@
 int MAXMEM = 1080;
 int PORTNUM = 17017;
 std::unique_ptr<Cache> CACHE_PTR;
-
-int exit(crow::SimpleApp app) {
-    app.stop();
-}
 
 int main(int argc, char *argv[])
 {
@@ -49,30 +46,69 @@ int main(int argc, char *argv[])
         if (req.method == "GET"_method){
             // Call the cache and get its space_used
             Cache::index_type mem = (*CACHE_PTR).space_used();
+            
             crow::json::wvalue return_json;
             return_json["memused"] = mem;
+
             return crow::response{return_json};
+        
         } else {
             return(crow::response(400));
         }
     });
-    // key PUT
+    // key PUT with value type int
     app.route_dynamic("/key/<string>/<int>")
     .methods("PUT"_method)
     ([](const crow::request& req,std::string key, int val){
         if (req.method == "PUT"_method){
             Cache::val_type val_point = &val;
             uint32_t val_size = sizeof(val);
+            
+            // Call set on the cache
             int set_return = (*CACHE_PTR).set(key,val_point,val_size);
+            
             // returns error if insertion fails
             if (set_return != 0) {
                 return(crow::response(400,"400 COULD NOT INSERT KEY/VALUE\n"));
             }
+            
             Cache::index_type memused = (*CACHE_PTR).space_used();
             crow::json::wvalue return_json;
+            
             return_json["value"] = val;
             return_json["key"] = key;
+            
             return crow::response{return_json};
+            
+            } else {
+            return(crow::response(400));
+        }
+    });
+
+    // key PUT with value type string
+    app.route_dynamic("/key/<string>/<string>")
+    .methods("PUT"_method)
+    ([](const crow::request& req,std::string key, std::string val){
+        if (req.method == "PUT"_method){
+            
+            Cache::val_type val_point = &val;
+            uint32_t val_size = sizeof(val);
+            
+            int set_return = (*CACHE_PTR).set(key,val_point,val_size);
+            
+            // returns error if insertion fails
+            if (set_return != 0) {
+                return(crow::response(400,"400 COULD NOT INSERT KEY/VALUE\n"));
+            }
+            
+            Cache::index_type memused = (*CACHE_PTR).space_used();
+            crow::json::wvalue return_json;
+            
+            return_json["value"] = val;
+            return_json["key"] = key;
+            
+            return crow::response{return_json};
+            
             } else {
             return(crow::response(400));
         }
@@ -82,6 +118,7 @@ int main(int argc, char *argv[])
     app.route_dynamic("/key/<string>") 
     .methods("DELETE"_method,"GET"_method,"HEAD"_method)
     ([](const crow::request& req,std::string key) {
+        // Delete method removes key/val if in cache
         if (req.method == "DELETE"_method)
         {
             Cache::index_type delete_return = (*CACHE_PTR).del(key);
@@ -91,7 +128,8 @@ int main(int argc, char *argv[])
                 return(crow::response(400,"400 KEY NOT IN CACHE \n"));
             }
             return crow::response(200,"200 VALUE DELETED\n");
-
+        
+        // Get method returns string of pointer to value
         } else if (req.method == "GET"_method) {
             Cache::index_type sized;
             Cache::val_type the_point = (*CACHE_PTR).get(key, sized);
@@ -103,17 +141,21 @@ int main(int argc, char *argv[])
             std::stringstream ss;
             ss << the_point;
             std::string point_string = ss.str();
+            
             crow::json::wvalue return_json;
             return_json["value"] = point_string;
             return_json["key"] = key;
+            
             return crow::response{return_json};
+        // Head method returns json
         } else if (req.method == "HEAD"_method) {
             // crows default header has most of the relevant parameters, we just needed to add these ones
             crow::response resp;
-            resp.add_header("Accept","text/plain");
+            Cache::index_type space = (*CACHE_PTR).space_used();
+            
+            resp.add_header("Accept","key:text/plain, value:string,int");
             resp.add_header("Accept-Charset","utf-8");
             resp.add_header("Content-Type","text/plain");
-            Cache::index_type space = (*CACHE_PTR).space_used();
             resp.add_header("Memory Used",std::to_string(space));
             return resp;
 
@@ -132,7 +174,7 @@ int main(int argc, char *argv[])
         }
     });
 
-    // opens the port specified in arguments
+    // opens the port specified in arguments or default if unspecified
     app.port(PORTNUM)
         .run();
 }

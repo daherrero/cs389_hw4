@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "testing_client.cc"
-// g++ -std=c++17 -o server server_testing.cpp cache.cpp -l boost_system -pthread
+// g++ -std=c++17 -o server server.cpp cache.cpp -l boost_system -pthread
 TEST_CASE("Set/Get","[single-file]")
 {
     SECTION("A value in the cache can be retrieved.")
