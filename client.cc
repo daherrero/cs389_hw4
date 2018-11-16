@@ -1,9 +1,9 @@
 #include "cache.hh"
 #include "json.hpp"
+#include <curl/curl.h>
 #include <sstream>
 #include <iostream>
 #include <string>
-#include <curl/curl.h>
 #include <list>
 
 std::string SERVER_NAME = "0.0.0.0";
@@ -49,7 +49,8 @@ public:
 
     int set(key_type key, val_type val, index_type size){
         std::stringstream url;
-        url << SERVER_NAME << ":" << PORT << "/" << "key" << "/" << key << "/" << val;
+        std::string * str_ptr = (std::string *)val;
+        url << SERVER_NAME << ":" << PORT << "/" << "key" << "/" << key << "/" << *str_ptr;
         auto url_str = url.str();
 
         CURL *curl;
@@ -69,7 +70,7 @@ public:
 
             return 0;
         }
-        return NULL;
+        return -1;
     }
 
     val_type get(key_type key, index_type& val_size) const {
@@ -81,7 +82,7 @@ public:
         CURLcode res;
         curl = curl_easy_init();
         if(curl) {
-            std::string readBuffer;
+             std::string readBuffer;
             curl_easy_setopt(curl, CURLOPT_URL, url_str.c_str());
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -91,23 +92,20 @@ public:
 
             std::stringstream sss;
             sss << readBuffer;
-            if (sss.str().compare("400 Bad Request")) {
+            std::string code = sss.str().substr(0,3);
+
+            if (code.compare("400") == 0) {
                 return NULL;
             }
 
             auto readBuffer_json = nlohmann::json::parse(readBuffer);
             auto key_name = readBuffer_json.at("key");
-            auto pointer_to_val = readBuffer_json.at("value");
+            std::string s = readBuffer_json.at("value");
+            Cache::val_type val_point = &s;
 
-            std::stringstream ss;
-            ss << pointer_to_val;
-            std::string point_string = ss.str();
-            unsigned long ul;
-            const char* cstr = point_string.c_str();
-            sscanf(cstr,"%lx",&ul);
-            void * ptv = (void *)(uintptr_t) ul;
-            val_size = sizeof(ptv);
-            return ptv;
+            val_size = sizeof(s);
+
+            return val_point;
         }
         return NULL;
     }
@@ -135,7 +133,7 @@ public:
 
             return 0;
         }
-        return NULL;
+        return -1;
     }
 
     index_type space_used() const {

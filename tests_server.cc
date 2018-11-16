@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include "testing_client.cc"
+#include "client.cc"
 
 TEST_CASE("Set/Get","[single-file]")
 {
@@ -8,7 +8,7 @@ TEST_CASE("Set/Get","[single-file]")
     {
         // Initialize cache and key/value variables/pointers
         const Cache::key_type key1 = "one";
-        const int val = 1;
+        const std::string val = "the";
         const Cache::val_type point1 = &val;
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
@@ -19,7 +19,10 @@ TEST_CASE("Set/Get","[single-file]")
 
         // Get the value
         Cache::val_type the_point = new_cache.get(key1, sized);
-        const uint32_t &theval = *(static_cast<const u_int32_t *>(the_point));
+        
+        // Dereference the pointer and assign
+        std::string * str_ptr = (std::string *)the_point;
+        std::string theval = *str_ptr;
 
         // Require the value returned is the initial value
         REQUIRE(theval == val);
@@ -31,7 +34,7 @@ TEST_CASE("Set/Get","[single-file]")
     {
         // Initialize cache and key/value variables/pointers
         const Cache::key_type key1 = "one";
-        const int val = 1;
+        const std::string val = "the";
         const Cache::val_type point1 = &val;
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
@@ -65,39 +68,12 @@ TEST_CASE("Set/Get","[single-file]")
         // Explicit call to destructor for server testing. (Flushes server side without shutdown)
         new_cache.~Cache();
     }
-    SECTION("Setting a value with size > the capacity of the cache fails.")
-    {
-        const Cache::key_type key1 = "one";
-        const Cache::key_type key2 = "two";
-        const int val = 1;
-        const Cache::val_type point1 = &val;
-        const Cache::index_type size1 = sizeof(val);
-        const Cache::index_type size2 = 10000000;
-        Cache new_cache(100);
-
-        // Set the value
-        new_cache.set(key1, point1, size1);
-
-        // Get the memory
-        Cache::index_type size_before = new_cache.space_used();
-
-        // Try and insert a value with size > capacity
-        new_cache.set(key2, point1, size2);
-
-        Cache::index_type size_after = new_cache.space_used();
-
-        // Require the size of the value returned is the size of the inital value
-        REQUIRE(size_before == size_after);
-
-        // Explicit call to destructor for server testing. (Flushes server side without shutdown)
-        new_cache.~Cache();
-    }
     SECTION("Setting a value of a key already in the cache updates space_used and value correctly.")
     {
         // Initialize cache and key/value variables/pointers
         const Cache::key_type key1 = "one";
-        const int val = 1;
-        const bool val2 = 0;
+        const std::string val = "the";
+        const std::string val2 = "the1";
         const Cache::val_type point1 = &val;
         const Cache::val_type point2 = &val2;
         const Cache::index_type size1 = sizeof(val);
@@ -113,7 +89,10 @@ TEST_CASE("Set/Get","[single-file]")
 
         // Get the new value
         Cache::val_type the_point = new_cache.get(key1, sized);
-        const bool &theval = *(static_cast<const bool *>(the_point));
+        
+        // Dereference the pointer and assign
+        std::string * str_ptr = (std::string *)the_point;
+        std::string theval = *str_ptr;
 
         // Get the memory used
         Cache::index_type memory = new_cache.space_used();
@@ -148,7 +127,7 @@ TEST_CASE("Space_used")
     {
         // Initialize cache and key/value variables/pointers
         const Cache::key_type key1 = "one";
-        const int val = 1;
+        const std::string val = "the";
         const Cache::val_type point1 = &val;
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
@@ -174,7 +153,7 @@ TEST_CASE("Del")
     {
         // Initialize cache and key/value variables/pointers
         const Cache::key_type key1 = "one";
-        const int val = 1;
+        const std::string val = "the";
         const Cache::val_type point1 = &val;
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
@@ -201,7 +180,7 @@ TEST_CASE("Del")
         // Initialize cache and key/value variables/pointers
         const Cache::key_type key1 = "one";
         const Cache::key_type key2 = "two";
-        const int val = 1;
+        const std::string val = "the";
         const Cache::val_type point1 = &val;
         const Cache::index_type size = sizeof(val);
         Cache new_cache(1000);
@@ -215,7 +194,10 @@ TEST_CASE("Del")
 
         // Get pointer to value in cache
         Cache::val_type the_point = new_cache.get(key1, sized);
-        const uint32_t &theval = *(static_cast<const u_int32_t *>(the_point));
+        
+        // Dereference the pointer and assign
+        std::string * str_ptr = (std::string *)the_point;
+        std::string theval = *str_ptr;
 
         // Require the value is still there and the memory used is correct
         REQUIRE(size == new_cache.space_used());

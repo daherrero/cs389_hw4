@@ -14,8 +14,6 @@ Disk 66.3 GB
 */
 
 
-
-
 #include "cache.hh"
 #include <cstring>
 #include <iostream>
@@ -46,12 +44,12 @@ public:
 	int set(key_type key, val_type val, index_type size){
 		// First check if key already has a value in the cache. 
 		// Delete old tuple if necessary
+		if (size > maxmem_ || size < 0){
+		return -1;
+		}
 		index_type tmp = 1;
 		if (get(key, tmp) != nullptr || tmp != 0) {
 			del(key);
-		}
-		if (size > maxmem_ || size < 0){
-			return -1;
 		}
 		// Set the new value
 		val_type copy = new char[size];

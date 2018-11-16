@@ -56,44 +56,28 @@ int main(int argc, char *argv[])
             return(crow::response(400));
         }
     });
-    // key PUT with value type int
-    app.route_dynamic("/key/<string>/<int>")
-    .methods("PUT"_method)
-    ([](const crow::request& req,std::string key, int val){
-        if (req.method == "PUT"_method){
-            Cache::val_type val_point = &val;
-            uint32_t val_size = sizeof(val);
-            
-            // Call set on the cache
-            int set_return = (*CACHE_PTR).set(key,val_point,val_size);
-            
-            // returns error if insertion fails
-            if (set_return != 0) {
-                return(crow::response(400));
-            }
-            
-            Cache::index_type memused = (*CACHE_PTR).space_used();
-            crow::json::wvalue return_json;
-            
-            return_json["value"] = val;
-            return_json["key"] = key;
-            
-            return crow::response{return_json};
-            
-            } else {
-            return(crow::response(400));
-        }
-    });
-
-    // key PUT with value type string
+   
+    // key PUT
     app.route_dynamic("/key/<string>/<string>")
     .methods("PUT"_method)
     ([](const crow::request& req,std::string key, std::string val){
         if (req.method == "PUT"_method){
-            
-            Cache::val_type val_point = &val;
-            uint32_t val_size = sizeof(val);
-            
+            std::string s = val;
+            int n = s.length();  
+      
+            // declaring character array 
+            char char_array[n+1];  
+      
+            // copying the contents of the  
+            // string to char array 
+            strcpy(char_array, s.c_str());  
+
+            Cache::val_type val_point = &char_array;
+
+            Cache::index_type val_size = sizeof(val);
+
+
+
             int set_return = (*CACHE_PTR).set(key,val_point,val_size);
             
             // returns error if insertion fails
@@ -101,9 +85,7 @@ int main(int argc, char *argv[])
                 return(crow::response(400));
             }
             
-            Cache::index_type memused = (*CACHE_PTR).space_used();
             crow::json::wvalue return_json;
-            
             return_json["value"] = val;
             return_json["key"] = key;
             
@@ -132,18 +114,19 @@ int main(int argc, char *argv[])
         // Get method returns string of pointer to value
         } else if (req.method == "GET"_method) {
             Cache::index_type sized;
-            Cache::val_type the_point = (*CACHE_PTR).get(key, sized);
+            auto the_point = (*CACHE_PTR).get(key, sized);
+            
             if (the_point == NULL)
             {
                 return(crow::response(400));
             }
-            // Convert pointer to string and return a json with the k/v pair
-            std::stringstream ss;
-            ss << the_point;
-            std::string point_string = ss.str();
-            
+
+            char *cptr = (char *)(the_point);
+	        std::string out_string(cptr);
+
             crow::json::wvalue return_json;
-            return_json["value"] = point_string;
+            std::cout << out_string << "OUT_STRING" << std::endl;
+            return_json["value"] = out_string;
             return_json["key"] = key;
             
             return crow::response{return_json};
@@ -153,7 +136,7 @@ int main(int argc, char *argv[])
             crow::response resp;
             Cache::index_type space = (*CACHE_PTR).space_used();
             
-            resp.add_header("Accept","key:text/plain, value:string,int");
+            resp.add_header("Accept","key:string, value:string");
             resp.add_header("Accept-Charset","utf-8");
             resp.add_header("Content-Type","text/plain");
             resp.add_header("Memory Used",std::to_string(space));
